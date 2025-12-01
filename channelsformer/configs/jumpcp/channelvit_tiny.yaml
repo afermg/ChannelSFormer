@@ -1,0 +1,18 @@
+DATA:
+    DATASET: jumpcp
+TRAIN:
+  EPOCHS: 100
+  WARMUP_EPOCHS: 10
+AUG:
+  CUTMIX: 0.0
+  MIXUP: 0.0
+  AUTO_AUGMENT: 'none'
+MODEL:
+  TYPE: channelsformer
+  NAME: channelvit_tiny_224
+  DROP_PATH_RATE: 0.1
+  CHANNELSFORMER:
+    IN_CHANS: 8
+    EMBED_DIM: 192
+    NUM_HEADS: 3
+    ATTENTION_TYPE: 'joint_space_channel'

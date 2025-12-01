@@ -1,0 +1,11 @@
+DATA:
+    DATASET: imagenet
+MODEL:
+  TYPE: channelsformer
+  NAME: channelvit_tiny_224
+  DROP_PATH_RATE: 0.1
+  CHANNELSFORMER:
+    IN_CHANS: 3
+    EMBED_DIM: 192
+    NUM_HEADS: 3
+    ATTENTION_TYPE: 'joint_space_channel'

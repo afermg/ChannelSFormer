@@ -1,0 +1,16 @@
+DATA:
+    DATASET: imagenet
+MODEL:
+  TYPE: channelsformer
+  NAME: channelsformer_tiny_224
+  DROP_PATH_RATE: 0.1
+  CHANNELSFORMER:
+    IN_CHANS: 3
+    EMBED_DIM: 192
+    NUM_HEADS: 3
+    ATTENTION_TYPE: 'divided_space_channel'
+    NO_ADDITIONAL_MAPPING: true
+    USE_CHANNEL_EMBEDDING: false
+    SEPARATE_CLS_FOR_CHANNEL: false
+    SEPARATE_CLS_AGGREGATION: 'att'
+    SPACE_CHANNEL_ORDER: 'channel_first'

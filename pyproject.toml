@@ -1,0 +1,33 @@
+[project]
+authors = [{name = "Jingwei Zhang"}, {name = "Srinivasan Sivanandan", email = "srinivasan@insitro.com"}]
+name = "channelsformer"
+description = "A Channel Agnostic Vision Transformer for Multi-Channel Cell Painting Images"
+requires-python = ">= 3.11"
+version = "1.0.0"
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.dependencies]
+# We need a python version that is compatible with pytorch
+python = ">=3.11,<3.12"
+einops = ">=0.8.1,<0.9"
+numpy = ">=1.26"
+pillow = ">=10.1.0,<11.0.0"
+pandas = ">=2.0.0,<2.3"
+fvcore = ">=0.1.5.post20221221,<0.2"
+wandb = ">=0.22.2,<0.23"
+boto3 = ">=1.40.52,<2"
+pytest = ">=8.4.2,<9"
+pyarrow = ">=21.0.0,<22"
+
+[tool.pixi.pypi-dependencies]
+torch = { version = ">=2.8", index = "https://download.pytorch.org/whl/cu126" }
+torchvision = { version = "*", index = "https://download.pytorch.org/whl/cu126" }
+timm = ">=0.4.12"
+pytorch-lightning = ">=2.0.0"
+kornia = ">=0.2.0"
+channelsformer = { path = ".", editable = true }
+
+[tool.pixi.tasks]
