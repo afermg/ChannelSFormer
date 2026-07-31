@@ -50,7 +50,7 @@ def setup(
     drop_path_rate: float = 0.0,
     weights: str | None = None,
     checkpoint_key: str | None = None,
-    device: int | None = None,
+    device: int | str | None = None,
 ) -> tuple[Callable, dict]:
     """Build a ChannelSFormer and (optionally) load a checkpoint.
 
@@ -77,15 +77,20 @@ def setup(
     checkpoint_key : str | None
         Optional key inside the checkpoint dict to load (e.g. ``model``,
         ``teacher``, ``state_dict``).
-    device : int | None
-        CUDA device index. None → cuda:0 if available, else cpu.
+    device : int | str | None
+        CUDA device index or torch device string. None selects cuda:0 when
+        available and otherwise CPU.
     """
     if device is None:
-        device = 0
-    if torch.cuda.is_available():
-        torch_device = torch.device(int(device))
+        torch_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    elif isinstance(device, int):
+        torch_device = torch.device(f"cuda:{device}")
     else:
-        torch_device = torch.device("cpu")
+        torch_device = torch.device(device)
+    if torch_device.type == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError(
+            f"CUDA device {torch_device} was requested but CUDA is unavailable"
+        )
 
     # num_classes=0 → head becomes nn.Identity so forward() returns features.
     model = ChannelSFormer(
@@ -108,9 +113,17 @@ def setup(
         drop_path_rate=drop_path_rate,
     )
 
-    if weights is not None and os.path.exists(weights):
-        state_dict = torch.load(weights, map_location="cpu")
-        if isinstance(state_dict, dict) and checkpoint_key and checkpoint_key in state_dict:
+    if weights is not None:
+        if not os.path.exists(weights):
+            raise FileNotFoundError(f"Checkpoint does not exist: {weights}")
+        # Full training checkpoints may contain pickle-based metadata. Only
+        # load checkpoints from trusted sources.
+        state_dict = torch.load(weights, map_location="cpu", weights_only=False)
+        if (
+            isinstance(state_dict, dict)
+            and checkpoint_key
+            and checkpoint_key in state_dict
+        ):
             state_dict = state_dict[checkpoint_key]
         elif isinstance(state_dict, dict) and "model" in state_dict:
             state_dict = state_dict["model"]
@@ -162,14 +175,16 @@ def process(
     the pooled (cls-token-style) feature tensor of shape (N, embed_dim).
     """
     if pixels.ndim != 5:
-        raise ValueError(
-            f"Expected NCZYX (5D) array, got shape {pixels.shape}"
-        )
+        raise ValueError(f"Expected NCZYX (5D) array, got shape {pixels.shape}")
     _, _, _, *input_yx = pixels.shape
     validate_input_shape(input_yx, expected_tile_size)
 
     # pad_channel_dim drops the Z axis (returns NCYX) and pads channels up to
     # ``expected_channels`` if needed.
+    if pixels.shape[1] > expected_channels:
+        raise ValueError(
+            f"Expected at most {expected_channels} channels, got {pixels.shape[1]}"
+        )
     pixels = pad_channel_dim(pixels, expected_channels)
     torch_tensor = torch.from_numpy(pixels.copy()).float().to(device)
 
