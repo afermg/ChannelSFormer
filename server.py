@@ -149,6 +149,7 @@ def setup(
     return processor, info
 
 
+@torch.inference_mode()
 def process(
     pixels: numpy.ndarray,
     model,
@@ -173,13 +174,12 @@ def process(
     pixels = pad_channel_dim(pixels, expected_channels)
     torch_tensor = torch.from_numpy(pixels.copy()).float().to(device)
 
-    with torch.no_grad():
-        feats = model(torch_tensor)  # (N, embed_dim)
+    feats = model(torch_tensor)  # (N, embed_dim)
     return feats
 
 
 async def main():
-    with pynng.Rep0(listen=address, recv_timeout=300) as sock:
+    with pynng.Rep0(listen=address, recv_timeout=300_000) as sock:
         print(f"ChannelSFormer server listening on {address}", flush=True)
         async with trio.open_nursery() as nursery:
             responder_curried = partial(responder, setup=setup)
